@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Bulk Messenger</title>
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Wazappp : WhatsApp Bulk Messenger</h1>
+      <p>Send personalized messages to multiple contacts with ease</p>
+    </div>
+
+    <div class="main-content">
+      <!-- Configuration Panel -->
+      <div class="card">
+        <h2>📋 Configuration</h2>
+        
+        <div class="form-group">
+          <label for="csvFile">Upload CSV File</label>
+          <div class="file-upload">
+            <input type="file" id="csvFile" accept=".csv" />
+            <label for="csvFile" class="file-upload-label">
+              📁 Choose CSV file or drag & drop here
+            </label>
+            <div class="file-name" id="fileName"></div>
+          </div>
+          <div class="csv-preview" id="csvPreview"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="messageTemplate">Message Template</label>
+          <textarea id="messageTemplate" placeholder="Hello {first_name}! 👋
+
+This is a personalized message for you from {company}.
+
+Best regards,
+{name}">Hello {first_name}! 👋
+
+This is a personalized message for you.
+
+Best regards!</textarea>
+          <div class="template-vars">
+            <h4>Available Variables:</h4>
+            <code>{name}</code>
+            <code>{first_name}</code>
+            <code>{phone}</code>
+            <code>{email}</code>
+            <code>{company}</code>
+            <code>{city}</code>
+            <code>{country}</code>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="method">Sending Method</label>
+          <select id="method">
+            <option value="web" selected>WhatsApp Web (Browser Automation)</option>
+            <option value="api">WhatsApp Business API</option>
+          </select>
+        </div>
+
+        <div id="apiSettings" style="display: none;">
+          <div class="form-group">
+            <label for="apiToken">WhatsApp Business API Token</label>
+            <input type="password" id="apiToken" placeholder="Enter your API token" />
+          </div>
+          <div class="form-group">
+            <label for="phoneNumberId">Phone Number ID</label>
+            <input type="text" id="phoneNumberId" placeholder="Enter phone number ID" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="strategy">Sending Strategy</label>
+          <select id="strategy">
+            <option value="conservative">Conservative (30-90s intervals) - Safest</option>
+            <option value="moderate" selected>Moderate (15-45s intervals) - Balanced</option>
+            <option value="aggressive">Aggressive (5-20s intervals) - Risky</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="maxPerHour">Max Messages Per Hour</label>
+          <input type="number" id="maxPerHour" value="30" min="1" max="100" />
+          <small>Recommended: 30-50 for web method, up to 100 for API</small>
+        </div>
+
+        <div class="form-group">
+          <label for="countryCode">Default Country Code</label>
+          <select id="countryCode">
+            <option value="91" selected>+91 (India)</option>
+            <option value="1">+1 (USA/Canada)</option>
+            <option value="44">+44 (UK)</option>
+            <option value="61">+61 (Australia)</option>
+            <option value="49">+49 (Germany)</option>
+            <option value="33">+33 (France)</option>
+            <option value="86">+86 (China)</option>
+            <option value="81">+81 (Japan)</option>
+            <option value="55">+55 (Brazil)</option>
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group">
+            <label for="startTime">Start Time (Optional)</label>
+            <input type="time" id="startTime" />
+          </div>
+          <div class="form-group">
+            <label for="endTime">End Time (Optional)</label>
+            <input type="time" id="endTime" />
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="btn" id="validateData">🔍 Validate Data</button>
+          <button class="btn" id="startSending" disabled>🚀 Start Sending Messages</button>
+          <button class="btn btn-secondary" id="stopSending" style="display: none;">⏹️ Stop Sending</button>
+        </div>
+      </div>
+
+      <!-- Status Panel -->
+      <div class="card">
+        <h2>📊 Status & Progress</h2>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-number" id="totalContacts">0</span>
+            <span class="stat-label">Total Contacts</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="messagesSent">0</span>
+            <span class="stat-label">Messages Sent</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="messagesFailed">0</span>
+            <span class="stat-label">Failed</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="successRate">0%</span>
+            <span class="stat-label">Success Rate</span>
+          </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">Ready to start...</div>
+        </div>
+
+        <div class="current-contact" id="currentContact" style="display: none;">
+          <h4>Currently Processing:</h4>
+          <div class="contact-info">
+            <span id="currentContactName">-</span>
+            <span id="currentContactPhone">-</span>
+          </div>
+        </div>
+
+        <div class="log-container" id="logContainer"></div>
+        
+        <div class="log-controls">
+          <button class="btn btn-small" id="clearLogs">Clear Logs</button>
+          <button class="btn btn-small" id="downloadLogs">Download Logs</button>
+        </div>
+      </div>
+
+      <!-- Instructions Panel -->
+      <div class="card full-width">
+        <h2>📖 Instructions & Requirements</h2>
+        <div class="instructions-grid">
+          <div class="instruction-card">
+            <h3>1. 📄 Prepare Your CSV File</h3>
+            <p>Your CSV file must contain these columns:</p>
+            <ul>
+              <li><strong>Name</strong> - Full name of the contact (required)</li>
+              <li><strong>Phone</strong> - Phone number without country code (required)</li>
+              <li><strong>CountryCode</strong> - Country code (optional, uses default if not provided)</li>
+              <li><strong>Email</strong> - Email address (optional)</li>
+              <li><strong>Company</strong> - Company name (optional)</li>
+              <li><strong>City</strong> - City name (optional)</li>
+              <li><strong>Country</strong> - Country name (optional)</li>
+            </ul>
+            <div class="example-csv">
+              <h4>Example CSV format:</h4>
+              <code>Name,Phone,CountryCode,Email,Company<br>
+              John Doe,9876543210,91,john@email.com,ABC Corp<br>
+              Jane Smith,9876543211,91,jane@email.com,XYZ Ltd</code>
+            </div>
+          </div>
+
+          <div class="instruction-card">
+            <h3>2. ✍️ Customize Your Message</h3>
+            <p>Use variables to personalize each message:</p>
+            <ul>
+              <li><code>{name}</code> - Full name from CSV</li>
+              <li><code>{first_name}</code> - First name only</li>
+              <li><code>{phone}</code> - Phone number</li>
+              <li><code>{email}</code> - Email address</li>
+              <li><code>{company}</code> - Company name</li>
+              <li><code>{city}</code> - City name</li>
+              <li><code>{country}</code> - Country name</li>
+            </ul>
+            <div class="message-example">
+              <h4>Example:</h4>
+              <code>Hi {first_name}! 👋<br><br>
+              Hope you're doing well in {city}.<br><br>
+              Best regards from {company}!</code>
+            </div>
+          </div>
+
+          <div class="instruction-card">
+            <h3>3. ⚙️ Choose Strategy</h3>
+            <p>Select sending strategy based on your needs:</p>
+            <ul>
+              <li><strong>Conservative (30-90s)</strong> - Safest option, mimics human behavior</li>
+              <li><strong>Moderate (15-45s)</strong> - Balanced speed and safety</li>
+              <li><strong>Aggressive (5-20s)</strong> - Fastest but higher detection risk</li>
+            </ul>
+            <div class="warning">
+              <strong>⚠️ Important:</strong> Aggressive mode may trigger WhatsApp's spam detection. Use conservative mode for important campaigns.
+            </div>
+          </div>
+
+          <div class="instruction-card">
+            <h3>4. 🔧 Setup Requirements</h3>
+            <p><strong>For WhatsApp Web method:</strong></p>
+            <ul>
+              <li>Keep this browser tab active during sending</li>
+              <li>Ensure stable internet connection</li>
+              <li>Don't use WhatsApp on your phone simultaneously</li>
+              <li>Have your phone nearby for QR code scanning</li>
+            </ul>
+            <p><strong>For API method:</strong></p>
+            <ul>
+              <li>WhatsApp Business API access token</li>
+              <li>Verified phone number ID</li>
+              <li>Business verification completed</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="warning-section">
+          <h3>⚠️ Important Disclaimers</h3>
+          <div class="warning-grid">
+            <div class="warning-item">
+              <strong>Compliance:</strong> Ensure you have permission to contact all recipients. Follow local regulations and WhatsApp's terms of service.
+            </div>
+            <div class="warning-item">
+              <strong>Rate Limits:</strong> WhatsApp has built-in spam protection. Excessive messaging may result in temporary or permanent bans.
+            </div>
+            <div class="warning-item">
+              <strong>Responsibility:</strong> This tool is for legitimate business communication only. Users are responsible for proper usage.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal" id="confirmModal">
+    <div class="modal-content">
+      <h3>Confirm Bulk Messaging</h3>
+      <p>You are about to send <strong id="confirmContactCount">0</strong> messages.</p>
+      <div class="modal-details">
+        <p><strong>Strategy:</strong> <span id="confirmStrategy"></span></p>
+        <p><strong>Rate:</strong> <span id="confirmRate"></span> messages/hour</p>
+        <p><strong>Estimated Duration:</strong> <span id="confirmDuration"></span></p>
+      </div>
+      <p>Are you sure you want to proceed?</p>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" id="cancelSending">Cancel</button>
+        <button class="btn" id="confirmSending">Start Sending</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
